@@ -1,0 +1,5 @@
+{
+    "require": {
+        "graze/telnet-client": "^2.3"
+    }
+}

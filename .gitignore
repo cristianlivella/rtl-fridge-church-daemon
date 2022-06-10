@@ -1,0 +1,6 @@
+configs/ezstream.xml
+configs/gqrx.conf
+recordings/*
+src/config.php
+src/vendor/*
+rtl433log.txt
