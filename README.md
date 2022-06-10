@@ -18,7 +18,7 @@ Thanks also to [zuckschwerdt](https://github.com/zuckschwerdt)'s help in solving
 
 Meanwhile, playing a bit with the RTL-SDR receiver, I was thinking of some other interesting uses for it, and I remembered that the parish in my town broadcasts church services and events over the air, but you can only listen to them via a special radio they sell.
 
-I then tried to receive the signal with my RTL dongle, and discovered that the parish broadcasts in the [862-876 MHz range](https://www.radio-scanner.it/862-876-mhz.html), and it is therefore possible to listen to it via a RTL-SDR radio software, like [gqrxz](https://github.com/gqrx-sdr/gqrx) just as easily as a normal FM radio.
+I then tried to receive the signal with my RTL dongle, and discovered that the parish broadcasts in the [862-876 MHz range](https://www.radio-scanner.it/862-876-mhz.html), and it is therefore possible to listen to it via a RTL-SDR radio software, like [gqrx](https://github.com/gqrx-sdr/gqrx) just as easily as a normal FM radio.
 
 The challenge now was to find a way to receive both freezer temperatures and parish radio, using the same RTL-SDR dongle, as the receiver can only receive one frequency at a time (to be precise, a small range of frequencies).
 
