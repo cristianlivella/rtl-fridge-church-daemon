@@ -13,7 +13,21 @@ $gqrxPid = null;
 $ezstreamPid = null;
 
 function logMessage(string $message, int $level = 3) {
-    echo date('Y-m-d H:i:s') . ' | ' . $message . PHP_EOL;
+    $message = date('Y-m-d H:i:s') . ' | ' . $message . PHP_EOL;
+    echo $message;
+    telegramMessage($message);
+}
+
+function telegramMessage(string $message) {
+    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage?chat_id=' . TELEGRAM_CHATID . '&text=' . urlencode($message);
+    $ch = curl_init();
+    $optArray = [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true
+    ];
+    curl_setopt_array($ch, $optArray);
+    curl_exec($ch);
+    curl_close($ch);
 }
 
 function timeElapsed(int $startTime): int {
@@ -95,12 +109,31 @@ function checkChurchStream() {
     $splicedData = array_splice($data, 6);
     $maxPower = max($splicedData);
 
+    logMessage('Church noise: ' . $maxPower);
+
     if ($maxPower > NOISE_POWER_THRESHOLD) {
         logMessage('Church stream found');
         killRtl433();
         startStream();
     } else {
         logMessage('Church stream not found');
+    }
+
+    logMessage('Church noise: ' . $maxPower);
+
+    $lastChurchCheck = time();
+}
+
+function checkChurchStreamEnd() {
+    global $lastChurchCheck;
+
+    $streamStatus = shell_exec('curl -s -I -X GET ' . STREAM_URL);
+    $streamStatus = explode(PHP_EOL, $streamStatus)[0];
+    $streamStatusCode = intval(explode(' ', $streamStatus)[1]);
+
+    if ($streamStatusCode !== 200) {
+        logMessage('Steam status code: ' . $streamStatusCode . '. Stopping stream.');
+        killStream();
     }
 
     $lastChurchCheck = time();
@@ -160,9 +193,17 @@ while (true) {
     if (!updatedInLastSeconds(60 * 60 * 4)) {
         killStream();
         startRtl433();
-    } elseif ((updatedInLastSeconds(40) && date('H') > 6 && date('H') < 22 && timeElapsed($lastChurchCheck) > 40) || timeElapsed($lastChurchCheck) > 60 * 5) {
+    } elseif (
+        (
+            (updatedInLastSeconds(40) && date('H') > 6 && date('H') < 22 && timeElapsed($lastChurchCheck) > 40) ||
+            (updatedInLastSeconds(40) && timeElapsed($lastChurchCheck) > 60 * 5) ||
+            timeElapsed($lastChurchCheck) > 60 * 6
+        ) && !$gqrxPid && !$ezstreamPid
+    ) {
         killRtl433();
         checkChurchStream();
+    } elseif ($gqrxPid && $ezstreamPid && timeElapsed($lastChurchCheck) > 60) {
+        checkChurchStreamEnd();
     } elseif (!$gqrxPid && !$ezstreamPid) {
         startRtl433();
     }

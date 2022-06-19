@@ -14,3 +14,7 @@ const GQRX_BINARY = 'gqrx';
 // CHURCH SECTION
 const NOISE_POWER_THRESHOLD = 5;
 const FREQUENCY = 123.456;  // MHz
+const STREAM_URL = '';
+
+const TELEGRAM_TOKEN = '';
+const TELEGRAM_CHATID = '';
