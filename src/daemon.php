@@ -146,12 +146,11 @@ function startStream() {
 
     logMessage('Starting church stream');
 
-    $command = GQRX_PRE_START;
     shell_exec(GQRX_PRE_START . ' > /dev/null 2>&1 & echo $!;');
     sleep(10);
+
     $command = GQRX_BINARY . ' -c ' . realpath(dirname(__FILE__) . '/../configs/gqrx.conf');
-    //$gqrxPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
-    $gqrxPid = shell_exec($command . ' > /dev/null & echo $!;');
+    $gqrxPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
     logMessage('gqrx pid: ' . $gqrxPid);
     sleep(30);
 

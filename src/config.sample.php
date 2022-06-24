@@ -9,6 +9,7 @@ const MQTT_PASSWORD = 'password';
 const RTL_433_BINARY = 'rtl_433';
 const RTL_433_DEVICE_ID = 73;
 
+const GQRX_PRE_START = '';
 const GQRX_BINARY = 'gqrx';
 
 // CHURCH SECTION
