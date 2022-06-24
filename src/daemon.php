@@ -146,9 +146,14 @@ function startStream() {
 
     logMessage('Starting church stream');
 
-    $command = GQRX_BINARY . ' -c ' . realpath(dirname(__FILE__) . '/../configs/gqrx.conf');
-    $gqrxPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
+    $command = GQRX_PRE_START;
+    shell_exec(GQRX_PRE_START . ' > /dev/null 2>&1 & echo $!;');
     sleep(10);
+    $command = GQRX_BINARY . ' -c ' . realpath(dirname(__FILE__) . '/../configs/gqrx.conf');
+    //$gqrxPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
+    $gqrxPid = shell_exec($command . ' > /dev/null & echo $!;');
+    logMessage('gqrx pid: ' . $gqrxPid);
+    sleep(30);
 
     $client = Graze\TelnetClient\TelnetClient::factory();
     $client->connect('localhost:7356');
@@ -163,8 +168,9 @@ function startStream() {
     sleep(5);
 
     $filename = date('Y-m-d-H-i-s') . '.ogg';
-    $command = 'nc -l -u 7355 | sox -t raw -r 96000 -b 16 -e signed - -r 96000 -t ogg - | tee ' . dirname(__FILE__) . '/../recordings/' . $filename . ' | ezstream -c ' . dirname(__FILE__) . '/../configs/ezstream.xml';
+    $command = 'nc -l -u localhost 7355 | sox -t raw -r 96000 -b 16 -e signed - -r 96000 -t ogg - | tee ' . dirname(__FILE__) . '/../recordings/' . $filename . ' | ezstream -c ' . dirname(__FILE__) . '/../configs/ezstream.xml';
     $ezstreamPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
+    logMessage('ezstream pid: ' . $ezstreamPid);
 }
 
 function killStream() {
@@ -181,7 +187,7 @@ function killStream() {
 }
 
 for ($i = 0; $i < 2; $i++) {
-    foreach (['rtl_fm', 'rtl_power', 'Gqrx', 'ezstream'] as $toKill) {
+    foreach (['rtl_fm', 'rtl_power', 'Gqrx', 'ezstream', 'gqrx', '"nc -l -u localhost 7355"'] as $toKill) {
         shell_exec('pkill ' . ($i === 1 ? '-9 ' : '') .  '-f ' . $toKill . '');
     }
     sleep(5);
