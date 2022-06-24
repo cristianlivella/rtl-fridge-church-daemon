@@ -161,7 +161,6 @@ function startStream() {
     if ($gqrxPid || $ezstreamPid) return;
 
     logMessage('Starting church stream');
-    sendTelegramMessage(TELEGRAM_GROUP_CHATID, '📻⛪ ***Trasmissione iniziata***', true);
 
     shell_exec(GQRX_PRE_START . ' > /dev/null 2>&1 & echo $!;');
     sleep(10);
@@ -183,6 +182,8 @@ function startStream() {
 
     sleep(5);
 
+    sendTelegramMessage(TELEGRAM_GROUP_CHATID, '📻⛪ ***Trasmissione iniziata***', true);
+
     $audioFilename = date('Y-m-d-H-i-s');
     $command = 'nc -l -u localhost 7355 | sox -t raw -r 96000 -b 16 -e signed - -r 96000 -t ogg - | tee ' . dirname(__FILE__) . '/../recordings/' . $audioFilename . '.ogg | ezstream -c ' . dirname(__FILE__) . '/../configs/ezstream.xml';
     $ezstreamPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
@@ -190,7 +191,7 @@ function startStream() {
 }
 
 function killStream() {
-    global $gqrxPid, $ezstreamPid;
+    global $gqrxPid, $ezstreamPid, $audioFilename;
 
     if (!($gqrxPid || $ezstreamPid)) return;
 
