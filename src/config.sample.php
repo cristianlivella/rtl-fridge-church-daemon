@@ -19,3 +19,4 @@ const STREAM_URL = '';
 
 const TELEGRAM_TOKEN = '';
 const TELEGRAM_CHATID = '';
+const TELEGRAM_GROUP_CHATID = '';

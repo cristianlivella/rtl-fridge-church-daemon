@@ -11,15 +11,16 @@ $lastChurchCheck = 0;
 $rtl433Pid = null;
 $gqrxPid = null;
 $ezstreamPid = null;
+$audioFilename = '';
 
 function logMessage(string $message, int $level = 3) {
     $message = date('Y-m-d H:i:s') . ' | ' . $message . PHP_EOL;
     echo $message;
-    telegramMessage($message);
+    sendTelegramMessage(TELEGRAM_CHATID, $message);
 }
 
-function telegramMessage(string $message) {
-    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage?chat_id=' . TELEGRAM_CHATID . '&text=' . urlencode($message);
+function sendTelegramMessage(string $chatId, string $message) {
+    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage?chat_id=' . $chatId . '&text=' . urlencode($message) . '&parse_mode=MarkdownV2';;
     $ch = curl_init();
     $optArray = [
         CURLOPT_URL => $url,
@@ -27,6 +28,23 @@ function telegramMessage(string $message) {
     ];
     curl_setopt_array($ch, $optArray);
     curl_exec($ch);
+    curl_close($ch);
+}
+
+function sendTelegramDocument(string $chatId, string $filename) {
+    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendDocument?chat_id=' . $chatId;
+    $fileInfo = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $filename);
+    $curlFile = new CURLFile($filename, $fileInfo);
+    $ch = curl_init();
+    $optArray = [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POSTFIELDS => [
+            'document' => $curlFile
+        ]
+    ];
+    curl_setopt_array($ch, $optArray);
+    echo curl_exec($ch);
     curl_close($ch);
 }
 
@@ -119,8 +137,6 @@ function checkChurchStream() {
         logMessage('Church stream not found');
     }
 
-    logMessage('Church noise: ' . $maxPower);
-
     $lastChurchCheck = time();
 }
 
@@ -140,11 +156,12 @@ function checkChurchStreamEnd() {
 }
 
 function startStream() {
-    global $gqrxPid, $ezstreamPid;
+    global $gqrxPid, $ezstreamPid, $audioFilename;
 
     if ($gqrxPid || $ezstreamPid) return;
 
     logMessage('Starting church stream');
+    sendTelegramMessage(TELEGRAM_GROUP_CHATID, '📻⛪ ***Trasmissione iniziata***');
 
     shell_exec(GQRX_PRE_START . ' > /dev/null 2>&1 & echo $!;');
     sleep(10);
@@ -166,8 +183,8 @@ function startStream() {
 
     sleep(5);
 
-    $filename = date('Y-m-d-H-i-s') . '.ogg';
-    $command = 'nc -l -u localhost 7355 | sox -t raw -r 96000 -b 16 -e signed - -r 96000 -t ogg - | tee ' . dirname(__FILE__) . '/../recordings/' . $filename . ' | ezstream -c ' . dirname(__FILE__) . '/../configs/ezstream.xml';
+    $audioFilename = date('Y-m-d-H-i-s');
+    $command = 'nc -l -u localhost 7355 | sox -t raw -r 96000 -b 16 -e signed - -r 96000 -t ogg - | tee ' . dirname(__FILE__) . '/../recordings/' . $audioFilename . '.ogg | ezstream -c ' . dirname(__FILE__) . '/../configs/ezstream.xml';
     $ezstreamPid = shell_exec($command . ' > /dev/null 2>&1 & echo $!;');
     logMessage('ezstream pid: ' . $ezstreamPid);
 }
@@ -181,6 +198,14 @@ function killStream() {
 
     killProcess($gqrxPid);
     killProcess($ezstreamPid);
+
+    logMessage('Converting audio file to MP3');
+    $filename = dirname(__FILE__) . '/../recordings/' . $audioFilename;
+    shell_exec('sox ' . $filename . '.ogg ' . $filename . '.mp3');
+
+    logMessage('Sending file to Telegram group');
+    sendTelegramDocument(TELEGRAM_GROUP_CHATID, $filename . '.mp3');
+    shell_exec('rm ' . $filename . '.mp3');
 
     $gqrxPid = $ezstreamPid = null;
 }
