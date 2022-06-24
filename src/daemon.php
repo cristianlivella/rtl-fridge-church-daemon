@@ -19,8 +19,8 @@ function logMessage(string $message, int $level = 3) {
     sendTelegramMessage(TELEGRAM_CHATID, $message);
 }
 
-function sendTelegramMessage(string $chatId, string $message) {
-    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage?chat_id=' . $chatId . '&text=' . urlencode($message) . '&parse_mode=MarkdownV2';;
+function sendTelegramMessage(string $chatId, string $message, bool $markdown = false) {
+    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage?chat_id=' . $chatId . '&text=' . urlencode($message) . ($markdown ? '&parse_mode=MarkdownV2' : '');
     $ch = curl_init();
     $optArray = [
         CURLOPT_URL => $url,
@@ -161,7 +161,7 @@ function startStream() {
     if ($gqrxPid || $ezstreamPid) return;
 
     logMessage('Starting church stream');
-    sendTelegramMessage(TELEGRAM_GROUP_CHATID, '📻⛪ ***Trasmissione iniziata***');
+    sendTelegramMessage(TELEGRAM_GROUP_CHATID, '📻⛪ ***Trasmissione iniziata***', true);
 
     shell_exec(GQRX_PRE_START . ' > /dev/null 2>&1 & echo $!;');
     sleep(10);
