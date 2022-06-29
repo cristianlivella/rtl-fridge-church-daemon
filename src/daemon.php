@@ -44,7 +44,7 @@ function sendTelegramDocument(string $chatId, string $filename) {
         ]
     ];
     curl_setopt_array($ch, $optArray);
-    echo curl_exec($ch);
+    curl_exec($ch);
     curl_close($ch);
 }
 
@@ -65,6 +65,7 @@ function elaborateFridgeData() {
 
     foreach ($content as $message) {
         $message = json_decode($message, true);
+        if (!in_array($message['channel'], [0, 1], true)) continue;
         $sensorsLastUpdate[$message['channel']] = strtotime($message['time']);
         logMessage('Received temperature for sensor ' . ($message['channel'] + 1));
     }
@@ -212,7 +213,7 @@ function killStream() {
 }
 
 for ($i = 0; $i < 2; $i++) {
-    foreach (['rtl_fm', 'rtl_power', 'Gqrx', 'ezstream', 'gqrx', '"nc -l -u localhost 7355"'] as $toKill) {
+    foreach (['rtl_fm', 'rtl_power', 'Gqrx', 'ezstream', 'gqrx', 'rtl_433', '"nc -l -u localhost 7355"'] as $toKill) {
         shell_exec('pkill ' . ($i === 1 ? '-9 ' : '') .  '-f ' . $toKill . '');
     }
     sleep(5);
